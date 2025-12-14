@@ -22,7 +22,6 @@ public enum TileType
 public class TileMono : MonoBehaviour
 {
     public Transform tileParent;
-    public GameObject bg;
     public GameObject show;
     public Dictionary<string,GameObject> TileDic  = new Dictionary<string,GameObject>();
     //public TileData TileData;
@@ -41,5 +40,11 @@ public class TileMono : MonoBehaviour
         {
             TileDic.Add(trans[i].gameObject.name, trans[i].gameObject);
         }
+    }
+
+    public void Choice(string typeName)
+    {
+        
+        show.SetActive(true);
     }
 }

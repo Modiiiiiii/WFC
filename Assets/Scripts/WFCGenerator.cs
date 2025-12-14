@@ -9,6 +9,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
     public int gridWidth = 10;
     public int gridHeight = 10;
     public  Dictionary <string,TileSo> SoConfigDic = new Dictionary<string, TileSo>();//So配置
+    public TileMono[,] grid;
     
     [Header("显示设置")]
     public float tileSize = 4f;
@@ -44,6 +45,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
     public void Generate()
     {
         ClearGrid();
+        grid = new TileMono[gridWidth, gridHeight];
         for (int y = 0; y < gridHeight; y++)
         {
             for (int x = 0; x < gridWidth; x++)
@@ -52,9 +54,35 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
                 var go = Instantiate(prefab, transform);
                 go.name = $"Tile_{x}_{y}";
                 go.transform.localPosition = new Vector3(x * tileSize, 0f, y * tileSize);
-                go.GetComponent<TileMono>().pos =  new Vector2(x, y);
+                var tile = go.GetComponent<TileMono>();
+                tile.pos =  new Vector2(x, y);
+                grid[x, y] = tile;
             }
         }
+    }
+
+    void Update()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            var cam = Camera.main;
+            if (cam == null) return;
+            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(ray, out var hit, 1000f))
+            {
+                var clicked = hit.collider.gameObject;
+                var typeName = clicked.name;
+                var tile = clicked.GetComponentInParent<TileMono>();
+                Debug.Log($"Click{tile.name}_{typeName}");
+                CollapseTo(tile, typeName);
+            }
+        }
+    }
+
+    void CollapseTo(TileMono tile, string typeName)
+    {
+        if (tile == null || tile.tileParent == null) return;
+        tile.Choice(typeName);
     }
 
     void ClearGrid()
@@ -71,6 +99,14 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
                 DestroyImmediate(child);
             }
         }
+        grid = null;
+    }
+    
+    public TileMono GetTile(int x, int y)
+    {
+        if (grid == null) return null;
+        if (x < 0 || y < 0 || x >= gridWidth || y >= gridHeight) return null;
+        return grid[x, y];
     }
     
 }
