@@ -102,14 +102,15 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
 
     void SetTileVisual(TileMono tile, string typeName)
     {
-        for (int i = 0; i < tile.tileParent.childCount; i++)
+        /*for (int i = 0; i < tile.tileParent.childCount; i++)
         {
             var child = tile.tileParent.GetChild(i);
             bool active = child.gameObject.name == typeName;
             child.gameObject.SetActive(active);
         }
         tile.isCollapsed = true;
-        if (tile.show != null) tile.show.SetActive(false);
+        if (tile.show != null) tile.show.SetActive(false);*/
+        tile.Choice(typeName);
     }
 
     void PropagateFrom(TileMono tile, TileType collapsed)

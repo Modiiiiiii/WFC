@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27f4dc814363d614d9f6d77d2262c0ad, type: 3}
+  m_Name: wire
+  m_EditorClassIdentifier: 
+  tileType: 13
+  sprite: {fileID: 21300000, guid: 3c488d5adff6a6444a792c35bb8562aa, type: 3}
+  upConnections: 070000000800000009000000
+  downConnections: 0200000008000000
+  rightConnections: 0d000000
+  leftConnections: 
