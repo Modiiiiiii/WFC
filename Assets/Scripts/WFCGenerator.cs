@@ -57,6 +57,11 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
                 var tile = go.GetComponent<TileMono>();
                 tile.pos =  new Vector2(x, y);
                 grid[x, y] = tile;
+                tile.Candidates.Clear();
+                foreach (var kv in SoConfigDic)
+                {
+                    tile.Candidates.Add(kv.Value.tileType);
+                }
             }
         }
     }
@@ -74,7 +79,10 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
                 var typeName = clicked.name;
                 var tile = clicked.GetComponentInParent<TileMono>();
                 Debug.Log($"Click{tile.name}_{typeName}");
-                CollapseTo(tile, typeName);
+                if (tile != null && SoConfigDic.ContainsKey(typeName))
+                {
+                    CollapseTo(tile, typeName);
+                }
             }
         }
     }
@@ -82,7 +90,81 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
     void CollapseTo(TileMono tile, string typeName)
     {
         if (tile == null || tile.tileParent == null) return;
+        //SetTileVisual(tile, typeName);
         tile.Choice(typeName);
+        tile.Candidates.Clear();
+        if (Enum.TryParse<TileType>(typeName, out var tt))
+        {
+            tile.Candidates.Add(tt);
+            PropagateFrom(tile, tt);
+        }
+    }
+
+    void SetTileVisual(TileMono tile, string typeName)
+    {
+        for (int i = 0; i < tile.tileParent.childCount; i++)
+        {
+            var child = tile.tileParent.GetChild(i);
+            bool active = child.gameObject.name == typeName;
+            child.gameObject.SetActive(active);
+        }
+        tile.isCollapsed = true;
+        if (tile.show != null) tile.show.SetActive(false);
+    }
+
+    void PropagateFrom(TileMono tile, TileType collapsed)
+    {
+        var q = new Queue<TileMono>();
+        q.Enqueue(tile);
+        while (q.Count > 0)
+        {
+            var cur = q.Dequeue();
+            TileType curType = collapsed;
+            if (cur.Candidates != null && cur.Candidates.Count == 1)
+            {
+                foreach (var t in cur.Candidates) { curType = t; break; }
+            }
+            string key = curType.ToString();
+            if (!SoConfigDic.ContainsKey(key)) continue;
+            var so = SoConfigDic[key];
+
+            TryRestrictNeighbor(cur, 0, so.upConnections, q);
+            TryRestrictNeighbor(cur, 1, so.downConnections, q);
+            TryRestrictNeighbor(cur, 2, so.rightConnections, q);
+            TryRestrictNeighbor(cur, 3, so.leftConnections, q);
+        }
+    }
+
+    void TryRestrictNeighbor(TileMono cur, int dir, TileType[] allowed, Queue<TileMono> q)
+    {
+        int x = (int)cur.pos.x;
+        int y = (int)cur.pos.y;
+        int nx = x, ny = y;
+        if (dir == 0) ny = y + 1;
+        else if (dir == 1) ny = y - 1;
+        else if (dir == 2) nx = x + 1;
+        else if (dir == 3) nx = x - 1;
+        var neighbor = GetTile(nx, ny);
+        if (neighbor == null || allowed == null || allowed.Length == 0) return;
+        var before = new HashSet<TileType>(neighbor.Candidates);
+        var after = new HashSet<TileType>();
+        for (int i = 0; i < allowed.Length; i++)
+        {
+            var t = allowed[i];
+            if (before.Contains(t)) after.Add(t);
+        }
+        if (after.Count == 0) return;
+        if (after.SetEquals(before)) return;
+        neighbor.Candidates = after;
+        if (!neighbor.isCollapsed && after.Count == 1)
+        {
+            foreach (var t in after)
+            {
+                SetTileVisual(neighbor, t.ToString());
+                q.Enqueue(neighbor);
+                break;
+            }
+        }
     }
 
     void ClearGrid()

@@ -24,9 +24,11 @@ public class TileMono : MonoBehaviour
     public Transform tileParent;
     public GameObject show;
     public Dictionary<string,GameObject> TileDic  = new Dictionary<string,GameObject>();
-    //public TileData TileData;
+    public HashSet<TileType> Candidates = new HashSet<TileType>();
     public bool isCollapsed;
     public Vector2 pos = new Vector2();
+    
+    public Dictionary <string,TileSo>  SoConfigDic => WfcGenerator.Instance.SoConfigDic;
     
     private void Awake()
     {
@@ -44,7 +46,8 @@ public class TileMono : MonoBehaviour
 
     public void Choice(string typeName)
     {
-        
         show.SetActive(true);
+        isCollapsed = true;
+        show.GetComponent<MeshRenderer>().material = TileDic[typeName].GetComponent<MeshRenderer>().material;
     }
 }
