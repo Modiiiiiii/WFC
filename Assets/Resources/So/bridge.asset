@@ -16,5 +16,5 @@ MonoBehaviour:
   sprite: {fileID: 21300000, guid: 3c488d5adff6a6444a792c35bb8562aa, type: 3}
   upConnections: 070000000800000009000000
   downConnections: 0200000008000000
+  leftConnections: 0d000000
   rightConnections: 0d000000
-  leftConnections: 

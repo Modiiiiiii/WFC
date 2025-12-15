@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   sprite: {fileID: 21300000, guid: 3c488d5adff6a6444a792c35bb8562aa, type: 3}
-  upConnections: 070000000800000009000000
-  downConnections: 0200000008000000
-  rightConnections: 0d000000
-  leftConnections: 
+  upConnections: 000000000100000002000000030000000500000006000000070000000800000009000000
+  downConnections: 05000000
+  rightConnections: 08000000
+  leftConnections: 0b000000
