@@ -57,11 +57,6 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
                 var tile = go.GetComponent<TileMono>();
                 tile.pos =  new Vector2(x, y);
                 grid[x, y] = tile;
-                tile.Candidates.Clear();
-                foreach (var kv in SoConfigDic)
-                {
-                    tile.Candidates.Add(kv.Value.tileType);
-                }
             }
         }
     }
@@ -87,6 +82,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         }
     }
 
+    //点击函数
     void CollapseTo(TileMono tile, string typeName)
     {
         if (tile == null || tile.tileParent == null) return;
