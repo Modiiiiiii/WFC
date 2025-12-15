@@ -79,13 +79,74 @@ public class TileMono : MonoBehaviour
     public void Choice(string typeName)
     {
         show.SetActive(true);
+        if (Enum.TryParse<TileType>(typeName, out var chosen))
+        {
+            currentTileType = chosen;
+        }
         isCollapsed = true;
         show.GetComponent<MeshRenderer>().material = _tileDic[typeName].GetComponent<MeshRenderer>().material;
+        foreach (var cand in new List<TileType>(_candidates))
+        {
+            if (cand.ToString() != typeName)
+            {
+                if (_tileDic.ContainsKey(cand.ToString()))
+                {
+                    _tileDic[cand.ToString()].SetActive(false);
+                }
+            }
+        }
+        _candidates.Clear();
+        _candidates.Add(currentTileType);
         EventDispatcher.TriggerEvent(Events.OnChoiceEvent,currentTileType,pos);
     }
 
     void OnChoiceEvent(TileType type,Vector2 pos)
     {
-        //to do 接受这个事件时，如果是邻家的格子，检查是否需要隐藏一些TileDic
+        if (isCollapsed) return;
+        if (!SoConfigDic.ContainsKey(type.ToString())) return;
+        var dir = GetDirectionFromNeighbor(pos, this.pos);
+        if (dir < 0) return;
+        var neighborSo = SoConfigDic[type.ToString()];
+        var toRemove = new List<TileType>();
+        foreach (var cand in _candidates)
+        {
+            bool canStay = neighborSo.CanConnectTo(cand, dir);
+            if (!canStay)
+            {
+                toRemove.Add(cand);
+            }
+        }
+        if (toRemove.Count == 0) return;
+        foreach (var r in toRemove)
+        {
+            RemoveCandidateSafe(r);
+        }
+        if (_candidates.Count == 1 && !isCollapsed)
+        {
+            Choice(_candidates[0].ToString());
+        }
+    }
+    
+    private void RemoveCandidateSafe(TileType type)
+    {
+        if (_candidates.Contains(type))
+        {
+            if (_tileDic.ContainsKey(type.ToString()))
+            {
+                _tileDic[type.ToString()].SetActive(false);
+            }
+            _candidates.Remove(type);
+        }
+    }
+    
+    private int GetDirectionFromNeighbor(Vector2 neighborPos, Vector2 selfPos)
+    {
+        var dx = (int)(selfPos.x - neighborPos.x);
+        var dy = (int)(selfPos.y - neighborPos.y);
+        if (dx == 0 && dy == 1) return 0;  // self is above neighbor -> neighbor's up
+        if (dx == 0 && dy == -1) return 1; // self is below neighbor -> neighbor's down
+        if (dx == -1 && dy == 0) return 2; // self is left  of neighbor -> neighbor's left
+        if (dx == 1 && dy == 0) return 3;  // self is right of neighbor -> neighbor's right
+        return -1;
     }
 }
