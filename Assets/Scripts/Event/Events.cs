@@ -60,6 +60,8 @@
         public static string FAMRA_DATA_DEAL = "FAMRA_DATA_DEAL";
 
         public static string PLAYER_PLAY_NEXT = "PLAYER_PLAY_NEXT";
+        
+        public static string OnChoiceEvent = "OnChoiceEvent";
     }
 }
 

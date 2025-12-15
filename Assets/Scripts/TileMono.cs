@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Modi.Event;
 public enum TileType
 {
     bridge,
@@ -19,6 +20,7 @@ public enum TileType
     vias,
     wire,
 }
+
 public class TileMono : MonoBehaviour
 {
     public Transform tileParent;
@@ -27,12 +29,19 @@ public class TileMono : MonoBehaviour
     public HashSet<TileType> Candidates = new HashSet<TileType>();
     public bool isCollapsed;
     public Vector2 pos = new Vector2();
+    public TileType currentTileType;
     
     public Dictionary <string,TileSo>  SoConfigDic => WfcGenerator.Instance.SoConfigDic;
     
     private void Awake()
     {
         Init();
+        EventDispatcher.AddEventListener<TileType,Vector2>(Events.OnChoiceEvent,OnChoiceEvent);
+    }
+
+    private void OnDestroy()
+    {
+        EventDispatcher.RemoveEventListener<TileType,Vector2>(Events.OnChoiceEvent,OnChoiceEvent);
     }
 
     private void Init()
@@ -49,5 +58,11 @@ public class TileMono : MonoBehaviour
         show.SetActive(true);
         isCollapsed = true;
         show.GetComponent<MeshRenderer>().material = TileDic[typeName].GetComponent<MeshRenderer>().material;
+        EventDispatcher.TriggerEvent(Events.OnChoiceEvent,currentTileType,pos);
+    }
+
+    void OnChoiceEvent(TileType type,Vector2 pos)
+    {
+        
     }
 }

@@ -39,9 +39,9 @@ public class TileSo : ScriptableObject
         switch (direction)
         {
             case 0: return upConnections;    // 上
-            case 1: return downConnections; // 右
-            case 2: return rightConnections;  // 下
-            case 3: return leftConnections;  // 左
+            case 1: return downConnections; // 下
+            case 2: return leftConnections;  // 左
+            case 3: return rightConnections;  // 右
             default: return null;
         }
     }
