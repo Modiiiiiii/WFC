@@ -90,13 +90,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
     void CollapseTo(TileMono tile, string typeName)
     {
         if (tile == null || tile.tileParent == null) return;
-        //SetTileVisual(tile, typeName);
         tile.Choice(typeName);
-        tile.Candidates.Clear();
-        if (Enum.TryParse<TileType>(typeName, out var tt))
-        {
-            tile.Candidates.Add(tt);
-        }
     }
 
     void ClearGrid()
