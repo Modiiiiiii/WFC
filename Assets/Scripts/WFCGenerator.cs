@@ -20,6 +20,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
     private Queue<TileMono> _collapseQueue = new Queue<TileMono>();
     
     
+    // 启动：加载SO配置并生成网格
     void Start()
     {
         InitSoConfig();
@@ -62,6 +63,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         }
     }
 
+    // 帧更新：处理点击与快捷键
     void Update()
     {
         if (Input.GetMouseButtonDown(0))
@@ -92,6 +94,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         }
     }
 
+    // 随机坍缩一个格子
     void RandomCollapse()
     {
         //todo 随机选择一个格子进行坍缩
@@ -104,6 +107,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
     }
 
     //点击函数
+    // 点击坍缩并启动传播
     void CollapseTo(TileMono tile, string typeName)
     {
         if (tile == null || tile.tileParent == null) return;
@@ -121,12 +125,14 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         }
     }
     
+    // 重置地图：清空队列并重新生成
     private void ResetMap()
     {
         _collapseQueue.Clear();
         Generate();
     }
     
+    // 传播队列处理：约束邻居候选并触发后续坍缩
     private void ProcessQueue()
     {
         while (_collapseQueue.Count > 0)
@@ -167,6 +173,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         }
     }
     
+    // 约束邻居候选：基于当前瓦片的方向接缝匹配
     private bool ConstrainNeighbor(TileSo srcSo, int dir, TileMono neighbor, int srcRotation)
     {
         if (neighbor.isCollapsed) return false;
@@ -192,11 +199,13 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         return changed;
     }
     
+    // 方向反转：0/1/2/3 -> 对应的反方向
     private int Opposite(int dir)
     {
         return (dir + 2) % 4;
     }
     
+    // 是否全部完成：所有未坍缩格子均无候选
     private bool IsComplete()
     {
         if (grid == null) return true;
@@ -212,6 +221,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         return true;
     }
     
+    // 查找最小熵格子：候选最少的未坍缩格子
     private TileMono FindMinEntropyTile()
     {
         TileMono result = null;
@@ -235,6 +245,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         return result;
     }
 
+    // 清空现有网格对象
     void ClearGrid()
     {
         for (int i = transform.childCount - 1; i >= 0; i--)
@@ -252,6 +263,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         grid = null;
     }
     
+    // 取指定坐标的格子（越界返回null）
     public TileMono GetTile(int x, int y)
     {
         if (grid == null) return null;

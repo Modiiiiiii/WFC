@@ -46,6 +46,7 @@ public class TileMono : MonoBehaviour
     
     public Dictionary <string,TileSo>  SoConfigDic => WfcGenerator.Instance.soConfigDic;
     
+    // 初始化：缓存子对象、填充候选并注册事件
     private void Awake()
     {
         Init();
@@ -57,6 +58,7 @@ public class TileMono : MonoBehaviour
         EventDispatcher.RemoveEventListener<TileType,Vector2>(Events.OnChoiceEvent,OnChoiceEvent);
     }
 
+    // 初始化字典与候选（类型×4个旋转）
     private void Init()
     {
         Transform[] trans = gameObject.GetComponentsInChildren<Transform>();
@@ -89,6 +91,7 @@ public class TileMono : MonoBehaviour
         }
     }
 
+    // 坍缩到指定类型与旋转
     public void Choice(string typeName,int rotate = 0)
     {
         show.SetActive(true);
@@ -106,6 +109,7 @@ public class TileMono : MonoBehaviour
         EventDispatcher.TriggerEvent(Events.OnChoiceEvent,currentTileType,pos);
     }
 
+    // 随机从候选中选择并坍缩
     public void RandomCollapse()
     {
         if (isCollapsed) return;
@@ -119,11 +123,13 @@ public class TileMono : MonoBehaviour
         Choice(chosen.type.ToString(), chosen.rotation);
     }
 
+    // 获取候选列表副本
     public List<Candidate> GetCandidates()
     {
         return new List<Candidate>(_candidates);
     }
     
+    // 移除指定候选（类型+旋转）
     public bool RemoveCandidate(Candidate candidate)
     {
         var before = _candidates.Count;
@@ -138,11 +144,13 @@ public class TileMono : MonoBehaviour
         return _candidates.Count < before;
     }
     
+    // 候选数量
     public int GetCandidateCount()
     {
         return _candidates.Count;
     }
     
+    // 选择事件回调（保留供扩展）
     void OnChoiceEvent(TileType type,Vector2 pos)
     {
         if (isCollapsed) return;
@@ -162,6 +170,7 @@ public class TileMono : MonoBehaviour
         // }
     }
     
+    // 由邻居位置计算方向（上右下左 -> 0/1/2/3）
     private int GetDirectionFromNeighbor(Vector2 neighborPos, Vector2 selfPos)
     {
         var dx = (int)(selfPos.x - neighborPos.x);
