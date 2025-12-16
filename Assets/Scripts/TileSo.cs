@@ -1,48 +1,28 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 [CreateAssetMenu(fileName = "TileData", menuName = "WFC/TileData")]
 public class TileSo : ScriptableObject
 {
     public TileType tileType;
-    //public GameObject prefab;
-    public Sprite sprite;
-    //public Color tileColor = Color.white;
-    
-    // 连接规则：上、右、下、左
-    public TileType[] upConnections;
-    public TileType[] downConnections;
-    public TileType[] leftConnections;
-    public TileType[] rightConnections;
- 
-    
-    // 检查是否可以连接
-    public bool CanConnectTo(TileType otherTile, int direction)
+    //public Sprite sprite;
+    public Seam[] AllConnections
     {
-        TileType[] connections = GetConnectionsForDirection(direction);
-        
-        if (connections == null || connections.Length == 0)
-            return false;
-            
-        foreach (TileType allowedType in connections)
+        get
         {
-            if (allowedType == otherTile)
-                return true;
+            return new[]
+            {
+                up,
+                right,
+                down,
+                left
+            };
         }
-        
-        return false;
-    }
-    
-    private TileType[] GetConnectionsForDirection(int direction)
-    {
-        switch (direction)
-        {
-            case 0: return upConnections;    // 上
-            case 1: return downConnections; // 下
-            case 2: return leftConnections;  // 左
-            case 3: return rightConnections;  // 右
-            default: return null;
-        }
-    }
+    } //上右下左 顺时针 
+    public Seam up;
+    public Seam right;
+    public Seam down;
+    public Seam left;
 }

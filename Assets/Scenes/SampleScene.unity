@@ -369,21 +369,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tile
       objectReference: {fileID: 0}
-    - target: {fileID: 5577594761704757965, guid: fede4c6cdb578a744a171ae3d1453f94, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 9207536762845912391, guid: fede4c6cdb578a744a171ae3d1453f94, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 9207536762845912391, guid: fede4c6cdb578a744a171ae3d1453f94, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 9207536762845912391, guid: fede4c6cdb578a744a171ae3d1453f94, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 1.3
       objectReference: {fileID: 0}
     - target: {fileID: 9207536762845912391, guid: fede4c6cdb578a744a171ae3d1453f94, type: 3}
       propertyPath: m_LocalRotation.w
