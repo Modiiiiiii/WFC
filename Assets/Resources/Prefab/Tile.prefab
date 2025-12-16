@@ -346,7 +346,7 @@ Transform:
   m_GameObject: {fileID: 1294273517689777741}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0.06}
+  m_LocalPosition: {x: 0, y: 0, z: -0.002}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -1266,6 +1266,7 @@ MonoBehaviour:
   isCollapsed: 0
   pos: {x: 0, y: 0}
   currentTileType: 0
+  currentRotation: 0
 --- !u!64 &5327435712342840732
 MeshCollider:
   m_ObjectHideFlags: 0
