@@ -13,4 +13,7 @@ MonoBehaviour:
   m_Name: bridge
   m_EditorClassIdentifier: 
   tileType: 0
-  allConnections: 00000000000000000000000000000000
+  up: 0
+  right: 1
+  down: 0
+  left: 1
