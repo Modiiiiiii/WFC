@@ -6,7 +6,6 @@ using Modi.Event;
 public enum TileType
 {
     bridge,
-    component,
     connection,
     dskew,
     skew,
@@ -34,11 +33,11 @@ public class TileMono : MonoBehaviour
 {
     public Transform tileParent;
     public GameObject show;
+    public GameObject error;
     private Dictionary<string,GameObject> _tileDic  = new Dictionary<string,GameObject>();
     private List<TileType> _candidates = new List<TileType>()
     {
         TileType.bridge,
-        TileType.component,
         TileType.connection,
         TileType.dskew,
         TileType.skew,
