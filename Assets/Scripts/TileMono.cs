@@ -36,25 +36,13 @@ public class TileMono : MonoBehaviour
     public GameObject show;
     public GameObject error;
     private Dictionary<string,GameObject> _tileDic  = new Dictionary<string,GameObject>();
-    private List<TileType> _candidates = new List<TileType>()
-    {
-        TileType.bridge,
-        TileType.connection,
-        TileType.dskew,
-        TileType.skew,
-        TileType.substrate,
-        TileType.t,
-        TileType.track,
-        TileType.transition,
-        TileType.turn,
-        TileType.viad,
-        TileType.vias,
-        TileType.wire,
-    };
+    public struct Candidate { public TileType type; public int rotation; }
+    private List<Candidate> _candidates = new List<Candidate>();
     
     public bool isCollapsed; //是否已经坍塌完毕
     public Vector2 pos = new Vector2();
     public TileType currentTileType;
+    public int currentRotation;
     
     public Dictionary <string,TileSo>  SoConfigDic => WfcGenerator.Instance.soConfigDic;
     
@@ -76,6 +64,29 @@ public class TileMono : MonoBehaviour
         {
             _tileDic.Add(trans[i].gameObject.name, trans[i].gameObject);
         }
+        _candidates.Clear();
+        var types = new[]
+        {
+            TileType.bridge,
+            TileType.connection,
+            TileType.dskew,
+            TileType.skew,
+            TileType.substrate,
+            TileType.t,
+            TileType.track,
+            TileType.transition,
+            TileType.turn,
+            TileType.viad,
+            TileType.vias,
+            TileType.wire,
+        };
+        for (int ti = 0; ti < types.Length; ti++)
+        {
+            for (int r = 0; r < 4; r++)
+            {
+                _candidates.Add(new Candidate { type = types[ti], rotation = r });
+            }
+        }
     }
 
     public void Choice(string typeName,int rotate = 0)
@@ -85,11 +96,13 @@ public class TileMono : MonoBehaviour
         {
             currentTileType = chosen;
         }
+        currentRotation = rotate;
         isCollapsed = true;
         show.GetComponent<MeshRenderer>().material = _tileDic[typeName].GetComponent<MeshRenderer>().material;
+        show.transform.localEulerAngles = new Vector3(0f, 0, -90f * rotate);
         tileParent.gameObject.SetActive(false);
         _candidates.Clear();
-        _candidates.Add(currentTileType);
+        _candidates.Add(new Candidate { type = currentTileType, rotation = currentRotation });
         EventDispatcher.TriggerEvent(Events.OnChoiceEvent,currentTileType,pos);
     }
 
@@ -103,18 +116,25 @@ public class TileMono : MonoBehaviour
         }
         var idx = UnityEngine.Random.Range(0, _candidates.Count);
         var chosen = _candidates[idx];
-        Choice(chosen.ToString());
+        Choice(chosen.type.ToString(), chosen.rotation);
     }
 
-    public List<TileType> GetCandidates()
+    public List<Candidate> GetCandidates()
     {
-        return new List<TileType>(_candidates);
+        return new List<Candidate>(_candidates);
     }
     
-    public bool RemoveCandidate(TileType type)
+    public bool RemoveCandidate(Candidate candidate)
     {
         var before = _candidates.Count;
-        RemoveCandidateSafe(type);
+        for (int i = _candidates.Count - 1; i >= 0; i--)
+        {
+            var c = _candidates[i];
+            if (c.type == candidate.type && c.rotation == candidate.rotation)
+            {
+                _candidates.RemoveAt(i);
+            }
+        }
         return _candidates.Count < before;
     }
     
@@ -132,14 +152,14 @@ public class TileMono : MonoBehaviour
     
     private void RemoveCandidateSafe(TileType type)
     {
-        if (_candidates.Contains(type))
-        {
-            if (_tileDic.ContainsKey(type.ToString()))
-            {
-                _tileDic[type.ToString()].SetActive(false);
-            }
-            _candidates.Remove(type);
-        }
+        // if (_candidates.Contains(type))
+        // {
+        //     if (_tileDic.ContainsKey(type.ToString()))
+        //     {
+        //         _tileDic[type.ToString()].SetActive(false);
+        //     }
+        //     _candidates.Remove(type);
+        // }
     }
     
     private int GetDirectionFromNeighbor(Vector2 neighborPos, Vector2 selfPos)

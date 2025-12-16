@@ -135,7 +135,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
                 var ny = y + (dir == 0 ? 1 : dir == 2 ? -1 : 0);
                 var neighbor = GetTile(nx, ny);
                 if (neighbor == null) continue;
-                var changed = ConstrainNeighbor(srcSo, dir, neighbor);
+                var changed = ConstrainNeighbor(srcSo, dir, neighbor, current.currentRotation);
                 if (!changed) continue;
                 var count = neighbor.GetCandidateCount();
                 if (count <= 0)
@@ -145,7 +145,8 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
                 }
                 if (!neighbor.isCollapsed && count == 1)
                 {
-                    neighbor.RandomCollapse();
+                    var only = neighbor.GetCandidates()[0];
+                    neighbor.Choice(only.type.ToString(), only.rotation);
                     _collapseQueue.Enqueue(neighbor);
                 }
                 else
@@ -156,22 +157,23 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         }
     }
     
-    private bool ConstrainNeighbor(TileSo srcSo, int dir, TileMono neighbor)
+    private bool ConstrainNeighbor(TileSo srcSo, int dir, TileMono neighbor, int srcRotation)
     {
         if (neighbor.isCollapsed) return false;
-        var need = srcSo.AllConnections[dir];
+        var need = srcSo.AllConnections[(dir - srcRotation + 4) % 4];
         var opp = Opposite(dir);
         var candidates = neighbor.GetCandidates();
         var changed = false;
         for (int i = 0; i < candidates.Count; i++)
         {
-            var t = candidates[i].ToString();
+            var cand = candidates[i];
+            var t = cand.type.ToString();
             if (!soConfigDic.ContainsKey(t)) continue;
             var nSo = soConfigDic[t];
-            var seam = nSo.AllConnections[opp];
+            var seam = nSo.AllConnections[(opp - cand.rotation + 4) % 4];
             if (seam != need)
             {
-                if (neighbor.RemoveCandidate(candidates[i]))
+                if (neighbor.RemoveCandidate(cand))
                 {
                     changed = true;
                 }
