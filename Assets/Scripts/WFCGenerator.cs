@@ -89,7 +89,12 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
 
     void RandomCollapse()
     {
-        
+        //todo 随机选择一个格子进行坍缩
+        var x = UnityEngine.Random.Range(0, gridWidth);
+        var y = UnityEngine.Random.Range(0, gridHeight);
+        var tile = grid[x, y];
+        if (tile == null) return;
+        tile.RandomCollapse();
     }
 
     //点击函数

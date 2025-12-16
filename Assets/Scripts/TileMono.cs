@@ -93,6 +93,11 @@ public class TileMono : MonoBehaviour
         EventDispatcher.TriggerEvent(Events.OnChoiceEvent,currentTileType,pos);
     }
 
+    public void RandomCollapse()
+    {
+        //todo 随机选择一个候选的Type进行坍缩
+    }
+
     void OnChoiceEvent(TileType type,Vector2 pos)
     {
         if (isCollapsed) return;
