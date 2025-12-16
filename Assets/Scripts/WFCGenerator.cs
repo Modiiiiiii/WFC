@@ -17,6 +17,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
     [Header("预制体")]
     public GameObject prefab;
     
+    private Queue<TileMono> _collapseQueue = new Queue<TileMono>();
     
     
     void Start()
@@ -94,6 +95,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         var y = UnityEngine.Random.Range(0, gridHeight);
         var tile = grid[x, y];
         if (tile == null) return;
+        if (tile.isCollapsed) return;
         tile.RandomCollapse();
     }
 
@@ -102,6 +104,123 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
     {
         if (tile == null || tile.tileParent == null) return;
         tile.Choice(typeName);
+        _collapseQueue.Clear();
+        _collapseQueue.Enqueue(tile);
+        ProcessQueue();
+        while (!IsComplete())
+        {
+            var next = FindMinEntropyTile();
+            if (next == null) break;
+            next.RandomCollapse();
+            _collapseQueue.Enqueue(next);
+            ProcessQueue();
+        }
+    }
+    
+    private void ProcessQueue()
+    {
+        while (_collapseQueue.Count > 0)
+        {
+            var current = _collapseQueue.Dequeue();
+            if (current == null) continue;
+            if (!current.isCollapsed) continue;
+            var x = (int)current.pos.x;
+            var y = (int)current.pos.y;
+            var srcType = current.currentTileType.ToString();
+            if (!soConfigDic.ContainsKey(srcType)) continue;
+            var srcSo = soConfigDic[srcType];
+            for (int dir = 0; dir < 4; dir++)
+            {
+                var nx = x + (dir == 1 ? 1 : dir == 3 ? -1 : 0);
+                var ny = y + (dir == 0 ? 1 : dir == 2 ? -1 : 0);
+                var neighbor = GetTile(nx, ny);
+                if (neighbor == null) continue;
+                var changed = ConstrainNeighbor(srcSo, dir, neighbor);
+                if (!changed) continue;
+                var count = neighbor.GetCandidateCount();
+                if (count <= 0)
+                {
+                    if (neighbor.error != null) neighbor.error.SetActive(true);
+                    continue;
+                }
+                if (!neighbor.isCollapsed && count == 1)
+                {
+                    neighbor.RandomCollapse();
+                    _collapseQueue.Enqueue(neighbor);
+                }
+                else
+                {
+                    _collapseQueue.Enqueue(neighbor);
+                }
+            }
+        }
+    }
+    
+    private bool ConstrainNeighbor(TileSo srcSo, int dir, TileMono neighbor)
+    {
+        if (neighbor.isCollapsed) return false;
+        var need = srcSo.AllConnections[dir];
+        var opp = Opposite(dir);
+        var candidates = neighbor.GetCandidates();
+        var changed = false;
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            var t = candidates[i].ToString();
+            if (!soConfigDic.ContainsKey(t)) continue;
+            var nSo = soConfigDic[t];
+            var seam = nSo.AllConnections[opp];
+            if (seam != need)
+            {
+                if (neighbor.RemoveCandidate(candidates[i]))
+                {
+                    changed = true;
+                }
+            }
+        }
+        return changed;
+    }
+    
+    private int Opposite(int dir)
+    {
+        return (dir + 2) % 4;
+    }
+    
+    private bool IsComplete()
+    {
+        if (grid == null) return true;
+        for (int y = 0; y < gridHeight; y++)
+        {
+            for (int x = 0; x < gridWidth; x++)
+            {
+                var t = grid[x, y];
+                if (t == null) continue;
+                if (!t.isCollapsed && t.GetCandidateCount() > 0) return false;
+            }
+        }
+        return true;
+    }
+    
+    private TileMono FindMinEntropyTile()
+    {
+        TileMono result = null;
+        var best = int.MaxValue;
+        for (int y = 0; y < gridHeight; y++)
+        {
+            for (int x = 0; x < gridWidth; x++)
+            {
+                var t = grid[x, y];
+                if (t == null) continue;
+                if (t.isCollapsed) continue;
+                var c = t.GetCandidateCount();
+                if (c <= 0) continue;
+                if (c < best)
+                {
+                    best = c;
+                    result = t;
+                }
+            }
+        }
+        return result;
     }
 
     void ClearGrid()

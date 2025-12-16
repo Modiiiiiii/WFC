@@ -95,9 +95,34 @@ public class TileMono : MonoBehaviour
 
     public void RandomCollapse()
     {
-        //todo 随机选择一个候选的Type进行坍缩
+        if (isCollapsed) return;
+        if (_candidates == null || _candidates.Count == 0)
+        {
+            if (error != null) error.SetActive(true);
+            return;
+        }
+        var idx = UnityEngine.Random.Range(0, _candidates.Count);
+        var chosen = _candidates[idx];
+        Choice(chosen.ToString());
     }
 
+    public List<TileType> GetCandidates()
+    {
+        return new List<TileType>(_candidates);
+    }
+    
+    public bool RemoveCandidate(TileType type)
+    {
+        var before = _candidates.Count;
+        RemoveCandidateSafe(type);
+        return _candidates.Count < before;
+    }
+    
+    public int GetCandidateCount()
+    {
+        return _candidates.Count;
+    }
+    
     void OnChoiceEvent(TileType type,Vector2 pos)
     {
         if (isCollapsed) return;
