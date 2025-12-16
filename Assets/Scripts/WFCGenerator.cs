@@ -8,7 +8,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
     [Header("生成设置")]
     public int gridWidth = 10;
     public int gridHeight = 10;
-    public  Dictionary <string,TileSo> SoConfigDic = new Dictionary<string, TileSo>();//So配置
+    public Dictionary <string,TileSo> soConfigDic = new Dictionary<string, TileSo>();//So配置
     public TileMono[,] grid;
     
     [Header("显示设置")]
@@ -31,13 +31,13 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
     [ContextMenu("Init SO Config")]
     public void InitSoConfig()
     {
-        SoConfigDic.Clear();
+        soConfigDic.Clear();
         var all = Resources.LoadAll<TileSo>("So");
         for (int i = 0; i < all.Length; i++)
         {
             var so = all[i];
             var key = so.tileType.ToString();
-            SoConfigDic[key] = so;
+            soConfigDic[key] = so;
         }
     }
 
@@ -74,12 +74,22 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
                 var typeName = clicked.name;
                 var tile = clicked.GetComponentInParent<TileMono>();
                 Debug.Log($"Click{tile.name}_{typeName}");
-                if (tile != null && SoConfigDic.ContainsKey(typeName))
+                if (tile != null && soConfigDic.ContainsKey(typeName))
                 {
                     CollapseTo(tile, typeName);
                 }
             }
         }
+
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            RandomCollapse();
+        }
+    }
+
+    void RandomCollapse()
+    {
+        
     }
 
     //点击函数

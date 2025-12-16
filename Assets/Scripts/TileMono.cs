@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Modi.Event;
+
 public enum TileType
 {
     bridge,
@@ -55,13 +56,7 @@ public class TileMono : MonoBehaviour
     public Vector2 pos = new Vector2();
     public TileType currentTileType;
     
-    public Dictionary <string,TileSo>  SoConfigDic => WfcGenerator.Instance.SoConfigDic;
-
-    private void RemoveCandidate(TileType type)
-    {
-        _tileDic[type.ToString()].SetActive(false);
-        _candidates.Remove(type);
-    }
+    public Dictionary <string,TileSo>  SoConfigDic => WfcGenerator.Instance.soConfigDic;
     
     private void Awake()
     {
@@ -83,7 +78,7 @@ public class TileMono : MonoBehaviour
         }
     }
 
-    public void Choice(string typeName)
+    public void Choice(string typeName,int rotate = 0)
     {
         show.SetActive(true);
         if (Enum.TryParse<TileType>(typeName, out var chosen))
@@ -92,16 +87,7 @@ public class TileMono : MonoBehaviour
         }
         isCollapsed = true;
         show.GetComponent<MeshRenderer>().material = _tileDic[typeName].GetComponent<MeshRenderer>().material;
-        foreach (var cand in new List<TileType>(_candidates))
-        {
-            if (cand.ToString() != typeName)
-            {
-                if (_tileDic.ContainsKey(cand.ToString()))
-                {
-                    _tileDic[cand.ToString()].SetActive(false);
-                }
-            }
-        }
+        tileParent.gameObject.SetActive(false);
         _candidates.Clear();
         _candidates.Add(currentTileType);
         EventDispatcher.TriggerEvent(Events.OnChoiceEvent,currentTileType,pos);
