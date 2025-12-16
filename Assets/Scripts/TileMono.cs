@@ -8,7 +8,6 @@ public enum TileType
     bridge,
     component,
     connection,
-    corner,
     dskew,
     skew,
     substrate,
@@ -21,6 +20,16 @@ public enum TileType
     wire,
 }
 
+/// <summary>
+/// 接缝
+/// </summary>
+public enum Seam
+{
+    greenLine,
+    greyLine,
+    allGrenn,
+}
+
 public class TileMono : MonoBehaviour
 {
     public Transform tileParent;
@@ -31,7 +40,6 @@ public class TileMono : MonoBehaviour
         TileType.bridge,
         TileType.component,
         TileType.connection,
-        TileType.corner,
         TileType.dskew,
         TileType.skew,
         TileType.substrate,
@@ -105,26 +113,6 @@ public class TileMono : MonoBehaviour
         if (isCollapsed) return;
         if (!SoConfigDic.ContainsKey(type.ToString())) return;
         var dir = GetDirectionFromNeighbor(pos, this.pos);
-        if (dir < 0) return;
-        var neighborSo = SoConfigDic[type.ToString()];
-        var toRemove = new List<TileType>();
-        foreach (var cand in _candidates)
-        {
-            bool canStay = neighborSo.CanConnectTo(cand, dir);
-            if (!canStay)
-            {
-                toRemove.Add(cand);
-            }
-        }
-        if (toRemove.Count == 0) return;
-        foreach (var r in toRemove)
-        {
-            RemoveCandidateSafe(r);
-        }
-        if (_candidates.Count == 1 && !isCollapsed)
-        {
-            Choice(_candidates[0].ToString());
-        }
     }
     
     private void RemoveCandidateSafe(TileType type)
