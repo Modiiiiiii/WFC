@@ -86,6 +86,10 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         {
             RandomCollapse();
         }
+        if (Input.GetKeyDown(KeyCode.D))
+        {
+            ResetMap();
+        }
     }
 
     void RandomCollapse()
@@ -115,6 +119,12 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
             _collapseQueue.Enqueue(next);
             ProcessQueue();
         }
+    }
+    
+    private void ResetMap()
+    {
+        _collapseQueue.Clear();
+        Generate();
     }
     
     private void ProcessQueue()
