@@ -152,9 +152,13 @@ public class TileMono : MonoBehaviour
         {
             item.Value.SetActive(false);
         }
-        for (int i = 0; i > _candidates.Count; i++)
+        for (int i = 0; i < _candidates.Count; i++)
         {
-            _tileDic[_candidates[i].type.ToString()].SetActive(true);
+            var t = _candidates[i].type.ToString();
+            if (_tileDic.ContainsKey(t))
+            {
+                _tileDic[t].SetActive(true);
+            }
         }
     }
     
@@ -171,19 +175,6 @@ public class TileMono : MonoBehaviour
         if (!SoConfigDic.ContainsKey(type.ToString())) return;
         var dir = GetDirectionFromNeighbor(pos, this.pos);
     }
-    
-    private void RemoveCandidateSafe(TileType type)
-    {
-        // if (_candidates.Contains(type))
-        // {
-        //     if (_tileDic.ContainsKey(type.ToString()))
-        //     {
-        //         _tileDic[type.ToString()].SetActive(false);
-        //     }
-        //     _candidates.Remove(type);
-        // }
-    }
-    
     // 由邻居位置计算方向（上右下左 -> 0/1/2/3）
     private int GetDirectionFromNeighbor(Vector2 neighborPos, Vector2 selfPos)
     {
