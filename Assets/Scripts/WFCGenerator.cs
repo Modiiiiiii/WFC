@@ -109,6 +109,8 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
 
     // 自动化协程
     private Coroutine _autoRunCoroutine;
+    // 传播过程协程（用于细粒度控制）
+    private Coroutine _propagationCoroutine;
     // Gizmos 绘制数据：传播路径线段 (起点, 终点)
     private List<System.Tuple<Vector3, Vector3>> _propagationGizmos = new List<System.Tuple<Vector3, Vector3>>();
     // 当前正在处理的格子（用于绘制高亮）
@@ -142,7 +144,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         tile.Choice(typeName, rotation);
         
         // 停止之前的自动流程（如果还在跑）
-        if (_autoRunCoroutine != null) StopCoroutine(_autoRunCoroutine);
+        StopAllRunningCoroutines();
         
         // 清空之前的 Gizmos
         _propagationGizmos.Clear();
@@ -150,18 +152,29 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
 
         _collapseQueue.Clear();
         _collapseQueue.Enqueue(tile);
-        ProcessQueue();
         
         // 启动自动化流程
         _autoRunCoroutine = StartCoroutine(AutoRunSequence());
+    }
+    
+    // 辅助：停止所有正在运行的逻辑协程
+    private void StopAllRunningCoroutines()
+    {
+        if (_autoRunCoroutine != null) StopCoroutine(_autoRunCoroutine);
+        if (_propagationCoroutine != null) StopCoroutine(_propagationCoroutine);
+        _autoRunCoroutine = null;
+        _propagationCoroutine = null;
     }
 
     // 自动化流程协程
     private IEnumerator AutoRunSequence()
     {
+        // 首次进入，先处理点击产生的传播
+        yield return StartCoroutine(ProcessQueueCoroutine());
+
         while (!IsComplete())
         {
-            // 等待1秒
+            // 等待1秒（宏观步骤间隔）
             yield return new WaitForSeconds(1f);
             
             var next = FindMinEntropyTile();
@@ -174,14 +187,16 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
 
             next.RandomCollapse();
             _collapseQueue.Enqueue(next);
-            ProcessQueue();
+            
+            // 等待传播完成
+            yield return StartCoroutine(ProcessQueueCoroutine());
         }
     }
     
     // 重置地图：清空队列并重新生成
     private void ResetMap()
     {
-        if (_autoRunCoroutine != null) StopCoroutine(_autoRunCoroutine);
+        StopAllRunningCoroutines();
         _propagationGizmos.Clear();
         _currentProcessingTile = null;
         _collapseQueue.Clear();
@@ -189,7 +204,8 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
     }
     
     // 传播队列处理：约束邻居候选并触发后续坍缩
-    private void ProcessQueue()
+    // 改为协程以支持可视化停顿
+    private IEnumerator ProcessQueueCoroutine()
     {
         while (_collapseQueue.Count > 0)
         {
@@ -207,6 +223,9 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
 
             for (int dir = 0; dir < 4; dir++)
             {
+                // 微观停顿：每个方向停顿 0.1 秒
+                yield return new WaitForSeconds(0.1f);
+                
                 var nx = x + (dir == 1 ? 1 : dir == 3 ? -1 : 0);
                 var ny = y + (dir == 0 ? 1 : dir == 2 ? -1 : 0);
                 
@@ -247,6 +266,9 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
                 }
             }
         }
+        
+        // 队列处理完毕后，清空当前高亮
+        _currentProcessingTile = null;
     }
     
     // 约束邻居候选：邻居的每个候选必须与当前瓦片的至少一个剩余候选兼容
