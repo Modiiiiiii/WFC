@@ -61,10 +61,10 @@ public class TileMono : MonoBehaviour
     // 初始化字典与候选（类型×4个旋转）
     private void Init()
     {
-        Transform[] trans = gameObject.GetComponentsInChildren<Transform>();
-        for (int i = 0; i < trans.Length; i++)
+        for (int i = 0; i < tileParent.childCount; i++)
         {
-            _tileDic.Add(trans[i].gameObject.name, trans[i].gameObject);
+            Transform child  = tileParent.GetChild(i);
+            _tileDic.Add(child.name, child.gameObject);
         }
         _candidates.Clear();
         var types = new[]
@@ -104,6 +104,7 @@ public class TileMono : MonoBehaviour
         show.GetComponent<MeshRenderer>().material = _tileDic[typeName].GetComponent<MeshRenderer>().material;
         show.transform.localEulerAngles = new Vector3(0f, 0, -90f * rotate);
         tileParent.gameObject.SetActive(false);
+        //UpdateCandidateShow(); // 刷新显示，仅隐藏非选中候选
         _candidates.Clear();
         _candidates.Add(new Candidate { type = currentTileType, rotation = currentRotation });
         EventDispatcher.TriggerEvent(Events.OnChoiceEvent,currentTileType,pos);
@@ -148,10 +149,15 @@ public class TileMono : MonoBehaviour
 
     private void UpdateCandidateShow()
     {
+        // 1. 先全部隐藏
         foreach (var item in _tileDic)
         {
-            item.Value.SetActive(false);
+            if (item.Value != null)
+                item.Value.SetActive(false);
         }
+        
+        // 2. 只显示当前候选列表中存在的类型
+        // 注意：可能有多个候选对应同一个类型（不同旋转），只要类型存在就显示
         for (int i = 0; i < _candidates.Count; i++)
         {
             var t = _candidates[i].type.ToString();
