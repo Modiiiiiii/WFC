@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Modi;
@@ -106,6 +107,13 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         tile.RandomCollapse();
     }
 
+    // 自动化协程
+    private Coroutine _autoRunCoroutine;
+    // Gizmos 绘制数据：传播路径线段 (起点, 终点)
+    private List<System.Tuple<Vector3, Vector3>> _propagationGizmos = new List<System.Tuple<Vector3, Vector3>>();
+    // 当前正在处理的格子（用于绘制高亮）
+    private TileMono _currentProcessingTile;
+
     //点击函数
     // 点击坍缩并启动传播（仅传播一次，不自动补全）
     void CollapseTo(TileMono tile, string typeName)
@@ -133,14 +141,49 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         // 但为了健壮性，我们还是传给 Choice
         tile.Choice(typeName, rotation);
         
+        // 停止之前的自动流程（如果还在跑）
+        if (_autoRunCoroutine != null) StopCoroutine(_autoRunCoroutine);
+        
+        // 清空之前的 Gizmos
+        _propagationGizmos.Clear();
+        _currentProcessingTile = null;
+
         _collapseQueue.Clear();
         _collapseQueue.Enqueue(tile);
         ProcessQueue();
+        
+        // 启动自动化流程
+        _autoRunCoroutine = StartCoroutine(AutoRunSequence());
+    }
+
+    // 自动化流程协程
+    private IEnumerator AutoRunSequence()
+    {
+        while (!IsComplete())
+        {
+            // 等待1秒
+            yield return new WaitForSeconds(1f);
+            
+            var next = FindMinEntropyTile();
+            if (next == null) break;
+            
+            // 每次新的一步开始前，可以选择清空之前的传播线，或者累积
+            // 这里为了清晰展示每一步的影响，我们清空
+            _propagationGizmos.Clear();
+            _currentProcessingTile = null;
+
+            next.RandomCollapse();
+            _collapseQueue.Enqueue(next);
+            ProcessQueue();
+        }
     }
     
     // 重置地图：清空队列并重新生成
     private void ResetMap()
     {
+        if (_autoRunCoroutine != null) StopCoroutine(_autoRunCoroutine);
+        _propagationGizmos.Clear();
+        _currentProcessingTile = null;
         _collapseQueue.Clear();
         Generate();
     }
@@ -152,6 +195,9 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         {
             var current = _collapseQueue.Dequeue();
             if (current == null) continue;
+            
+            // 记录当前处理的格子用于可视化
+            _currentProcessingTile = current;
             
             // 注意：不再要求 current.isCollapsed。
             // 即使是未坍缩的节点，只要它的候选集减少了，也需要通知邻居进行重新约束。
@@ -171,6 +217,9 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
                 var changed = ConstrainNeighbor(current, dir, neighbor);
                 
                 if (!changed) continue;
+                
+                // 记录传播路径用于可视化
+                _propagationGizmos.Add(new System.Tuple<Vector3, Vector3>(current.transform.position, neighbor.transform.position));
 
                 var count = neighbor.GetCandidateCount();
                 if (count <= 0)
@@ -335,5 +384,30 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         if (x < 0 || y < 0 || x >= gridWidth || y >= gridHeight) return null;
         return grid[x, y];
     }
-    
+
+
+    private void OnDrawGizmos()
+    {
+        // 绘制当前正在处理的格子
+        if (_currentProcessingTile != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawSphere(_currentProcessingTile.transform.position+new Vector3(0,1,0), 0.5f);
+        }
+        
+        // 绘制传播路径
+        if (_propagationGizmos != null)
+        {
+            Gizmos.color = Color.yellow;
+            foreach (var line in _propagationGizmos)
+            {
+                if (line != null)
+                {
+                    Gizmos.DrawLine(line.Item1+new Vector3(0,1,0), line.Item2+new Vector3(0,1,0));
+                    // 在终点画一个小球表示影响到达
+                    Gizmos.DrawSphere(line.Item2, 0.3f);
+                }
+            }
+        }
+    }
 }
