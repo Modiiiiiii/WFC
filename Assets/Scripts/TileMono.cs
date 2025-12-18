@@ -141,7 +141,21 @@ public class TileMono : MonoBehaviour
                 _candidates.RemoveAt(i);
             }
         }
+
+        UpdateCandidateShow();
         return _candidates.Count < before;
+    }
+
+    private void UpdateCandidateShow()
+    {
+        foreach (var item in _tileDic)
+        {
+            item.Value.SetActive(false);
+        }
+        for (int i = 0; i > _candidates.Count; i++)
+        {
+            _tileDic[_candidates[i].type.ToString()].SetActive(true);
+        }
     }
     
     // 候选数量

@@ -107,7 +107,7 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
     }
 
     //点击函数
-    // 点击坍缩并启动传播
+    // 点击坍缩并启动传播（仅传播一次，不自动补全）
     void CollapseTo(TileMono tile, string typeName)
     {
         if (tile == null || tile.tileParent == null) return;
@@ -115,14 +115,6 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         _collapseQueue.Clear();
         _collapseQueue.Enqueue(tile);
         ProcessQueue();
-        while (!IsComplete())
-        {
-            var next = FindMinEntropyTile();
-            if (next == null) break;
-            next.RandomCollapse();
-            _collapseQueue.Enqueue(next);
-            ProcessQueue();
-        }
     }
     
     // 重置地图：清空队列并重新生成
