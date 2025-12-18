@@ -111,7 +111,28 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
     void CollapseTo(TileMono tile, string typeName)
     {
         if (tile == null || tile.tileParent == null) return;
-        tile.Choice(typeName);
+        
+        // 查找当前候选列表中，类型为 typeName 的第一个有效旋转
+        // 这样可以保证我们选中的是一个合法的状态（如果之前已经受过约束）
+        var candidates = tile.GetCandidates();
+        var rotation = 0;
+        var found = false;
+        
+        // 优先从现有候选中找
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            if (candidates[i].type.ToString() == typeName)
+            {
+                rotation = candidates[i].rotation;
+                found = true;
+                break; // 找到第一个匹配的即可
+            }
+        }
+        
+        // 如果候选中没有（理论上不应发生，除非强制点击了非法类型），默认给0
+        // 但为了健壮性，我们还是传给 Choice
+        tile.Choice(typeName, rotation);
+        
         _collapseQueue.Clear();
         _collapseQueue.Enqueue(tile);
         ProcessQueue();
