@@ -67,26 +67,19 @@ public class TileMono : MonoBehaviour
             _tileDic.Add(child.name, child.gameObject);
         }
         _candidates.Clear();
-        var types = new[]
+        
+        // 使用配置字典的Key来初始化候选，确保所有候选都有对应的配置
+        if (SoConfigDic != null)
         {
-            TileType.bridge,
-            TileType.connection,
-            TileType.dskew,
-            TileType.skew,
-            TileType.substrate,
-            TileType.t,
-            TileType.track,
-            TileType.transition,
-            TileType.turn,
-            TileType.viad,
-            TileType.vias,
-            TileType.wire,
-        };
-        for (int ti = 0; ti < types.Length; ti++)
-        {
-            for (int r = 0; r < 4; r++)
+            foreach (var key in SoConfigDic.Keys)
             {
-                _candidates.Add(new Candidate { type = types[ti], rotation = r });
+                if (Enum.TryParse<TileType>(key, out var tType))
+                {
+                    for (int r = 0; r < 4; r++)
+                    {
+                        _candidates.Add(new Candidate { type = tType, rotation = r });
+                    }
+                }
             }
         }
     }

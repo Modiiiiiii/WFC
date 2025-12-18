@@ -131,63 +131,115 @@ public class WfcGenerator : SingletonMono<WfcGenerator>
         {
             var current = _collapseQueue.Dequeue();
             if (current == null) continue;
-            if (!current.isCollapsed) continue;
+            
+            // 注意：不再要求 current.isCollapsed。
+            // 即使是未坍缩的节点，只要它的候选集减少了，也需要通知邻居进行重新约束。
+
             var x = (int)current.pos.x;
             var y = (int)current.pos.y;
-            var srcType = current.currentTileType.ToString();
-            if (!soConfigDic.ContainsKey(srcType)) continue;
-            var srcSo = soConfigDic[srcType];
+
             for (int dir = 0; dir < 4; dir++)
             {
                 var nx = x + (dir == 1 ? 1 : dir == 3 ? -1 : 0);
                 var ny = y + (dir == 0 ? 1 : dir == 2 ? -1 : 0);
+                
                 var neighbor = GetTile(nx, ny);
                 if (neighbor == null) continue;
-                var changed = ConstrainNeighbor(srcSo, dir, neighbor, current.currentRotation);
+
+                // 使用新的约束逻辑：基于 current 的所有剩余候选来约束 neighbor
+                var changed = ConstrainNeighbor(current, dir, neighbor);
+                
                 if (!changed) continue;
+
                 var count = neighbor.GetCandidateCount();
                 if (count <= 0)
                 {
                     if (neighbor.error != null) neighbor.error.SetActive(true);
                     continue;
                 }
+
+                // 如果邻居只剩一个候选且尚未坍缩，则自动坍缩
                 if (!neighbor.isCollapsed && count == 1)
                 {
                     var only = neighbor.GetCandidates()[0];
+                    // 自动坍缩会触发 Choice，进而更新显示和状态
+                    // 注意：Choice 内部可能也会有些逻辑，但为了保持传播一致性，我们在这里入队
                     neighbor.Choice(only.type.ToString(), only.rotation);
                     _collapseQueue.Enqueue(neighbor);
                 }
                 else
                 {
+                    // 即使没有坍缩，只要候选减少了，就需要继续传播
+                    // 为了防止循环入队，通常只有当候选集真正改变时才入队（前面已经 check changed）
+                    // 此外，为了性能，可以检查是否已经在队列中（虽然 Queue 不方便检查，但 Set 可以）
+                    // 这里简化处理，直接入队
                     _collapseQueue.Enqueue(neighbor);
                 }
             }
         }
     }
     
-    // 约束邻居候选：基于当前瓦片的方向接缝匹配
-    private bool ConstrainNeighbor(TileSo srcSo, int dir, TileMono neighbor, int srcRotation)
+    // 约束邻居候选：邻居的每个候选必须与当前瓦片的至少一个剩余候选兼容
+    private bool ConstrainNeighbor(TileMono src, int dir, TileMono neighbor)
     {
         if (neighbor.isCollapsed) return false;
-        var need = srcSo.AllConnections[(dir - srcRotation + 4) % 4];
-        var opp = Opposite(dir);
-        var candidates = neighbor.GetCandidates();
+
+        var srcCandidates = src.GetCandidates();
+        var neighborCandidates = neighbor.GetCandidates();
         var changed = false;
-        for (int i = 0; i < candidates.Count; i++)
+        
+        // 预计算 src 在 dir 方向上所有可能的接缝集合，优化性能
+        // 注意：这里存储 Seam 枚举，确保类型匹配
+        var possibleSeams = new System.Collections.Generic.HashSet<Seam>();
+        for (int i = 0; i < srcCandidates.Count; i++)
         {
-            var cand = candidates[i];
-            var t = cand.type.ToString();
-            if (!soConfigDic.ContainsKey(t)) continue;
-            var nSo = soConfigDic[t];
-            var seam = nSo.AllConnections[(opp - cand.rotation + 4) % 4];
-            if (seam != need)
+            var sCand = srcCandidates[i];
+            var sType = sCand.type.ToString();
+            if (soConfigDic.ContainsKey(sType))
             {
-                if (neighbor.RemoveCandidate(cand))
+                var sSo = soConfigDic[sType];
+                // 计算 src 在 dir 方向的接缝
+                // 旋转公式：(dir - rot + 4) % 4
+                var sSeam = sSo.AllConnections[(dir - sCand.rotation + 4) % 4];
+                possibleSeams.Add(sSeam);
+            }
+        }
+
+        var opp = Opposite(dir);
+
+        // 检查邻居的每个候选
+        // 我们不能在遍历列表时删除元素，所以倒序遍历或者收集待删除项
+        // TileMono.RemoveCandidate 内部是 List.Remove，倒序遍历安全
+        for (int i = neighborCandidates.Count - 1; i >= 0; i--)
+        {
+            var nCand = neighborCandidates[i];
+            var nType = nCand.type.ToString();
+            
+            // 如果邻居的类型在配置中不存在，直接移除（因为无法计算接缝）
+            if (!soConfigDic.ContainsKey(nType))
+            {
+                if (neighbor.RemoveCandidate(nCand))
+                {
+                    changed = true;
+                }
+                continue;
+            }
+
+            var nSo = soConfigDic[nType];
+            // 计算 neighbor 在 opp 方向的接缝
+            var nSeam = nSo.AllConnections[(opp - nCand.rotation + 4) % 4];
+
+            // 检查这个接缝是否在 src 的可能接缝集合中
+            if (!possibleSeams.Contains(nSeam))
+            {
+                // 不兼容，移除该候选
+                if (neighbor.RemoveCandidate(nCand))
                 {
                     changed = true;
                 }
             }
         }
+        
         return changed;
     }
     
